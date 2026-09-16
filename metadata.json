@@ -1,0 +1,6 @@
+{
+  "name": "ELIF Admin",
+  "description": "Standalone luxury fashion e-commerce administration portal for ELIF.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-brand: 'Playfair Display', Georgia, serif;
+    --font-serif: 'Playfair Display', Georgia, serif;
+    --font-fashion: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+    /* ELIF Luxury Fashion Admin Palette */
+    --color-primary: #18281B; /* Deep Forest Green */
+    --color-primary-dark: #121F15;
+    --color-secondary: #2D6636; /* Accent Green */
+    --color-nav-active: #2D4B36; /* Active Nav Pill */
+    --color-ivory: #FAF7EB; /* Warm Ivory Canvas */
+    --color-card: #FFFFFF;
+    --color-border: #DED6BE; /* Soft Warm Border */
+    --color-border-light: #EBE4D2;
+    --color-text-main: #18281B;
+    --color-text-muted: #5A6258;
+    --color-text-subtle: #7A8278;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #FAF7EB;
+    color: #18281B;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+.font-brand {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.font-serif {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.font-fashion {
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.font-sans {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Custom subtle scrollbar for editorial elegance */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #D8D2C6;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B8B0A0;
+}
+
