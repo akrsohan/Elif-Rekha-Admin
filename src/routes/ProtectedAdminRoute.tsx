@@ -17,7 +17,8 @@ export const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ childr
     }
   }, [loading, user, adminProfile, signOut]);
 
-  if (loading) {
+  // Only display blocking loader during initial cold-start if user is not loaded yet
+  if (loading && !user) {
     return (
       <div id="admin-auth-loading" className="min-h-screen flex flex-col items-center justify-center bg-[#FAF8F5] text-[#1A1A1A] p-6">
         <div className="flex flex-col items-center max-w-sm text-center">

@@ -79,6 +79,113 @@ export const ProductEditorPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [codeError, setCodeError] = useState<string | null>(null);
+  const [draftRestored, setDraftRestored] = useState(false);
+
+  const DRAFT_KEY = 'elif_admin_product_draft';
+
+  // Restore draft if creating a new product
+  useEffect(() => {
+    if (isEditing) return;
+    try {
+      const savedDraft = sessionStorage.getItem(DRAFT_KEY);
+      if (savedDraft) {
+        const d = JSON.parse(savedDraft);
+        if (d.name) setName(d.name);
+        if (d.productCode) setProductCode(d.productCode);
+        if (d.slug) setSlug(d.slug);
+        if (d.price) setPrice(d.price);
+        if (d.compareAtPrice) setCompareAtPrice(d.compareAtPrice);
+        if (d.description) setDescription(d.description);
+        if (d.status) setStatus(d.status);
+        if (d.selectedCategoryIds) setSelectedCategoryIds(d.selectedCategoryIds);
+        if (d.variants && d.variants.length > 0) setVariants(d.variants);
+        if (d.images && d.images.length > 0) setImages(d.images);
+        if (d.badge) setBadge(d.badge);
+        if (d.shortDescription) setShortDescription(d.shortDescription);
+        if (d.careInstructions) setCareInstructions(d.careInstructions);
+        if (d.shippingInformation) setShippingInformation(d.shippingInformation);
+        if (d.seoTitle) setSeoTitle(d.seoTitle);
+        if (d.seoDescription) setSeoDescription(d.seoDescription);
+        setDraftRestored(true);
+      }
+    } catch (e) {
+      console.warn('Could not restore draft:', e);
+    }
+  }, [isEditing]);
+
+  // Debounced auto-save draft to sessionStorage
+  useEffect(() => {
+    if (isEditing) return;
+    if (!name && !productCode && !price && !description && images.length === 0 && variants.length === 0) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      try {
+        const draftData = {
+          name,
+          productCode,
+          slug,
+          price,
+          compareAtPrice,
+          description,
+          status,
+          selectedCategoryIds,
+          variants,
+          images,
+          badge,
+          shortDescription,
+          careInstructions,
+          shippingInformation,
+          seoTitle,
+          seoDescription,
+          savedAt: new Date().toISOString(),
+        };
+        sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
+      } catch (e) {
+        // Ignore quota limits
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [
+    isEditing,
+    name,
+    productCode,
+    slug,
+    price,
+    compareAtPrice,
+    description,
+    status,
+    selectedCategoryIds,
+    variants,
+    images,
+    badge,
+    shortDescription,
+    careInstructions,
+    shippingInformation,
+    seoTitle,
+    seoDescription,
+  ]);
+
+  const clearDraft = () => {
+    sessionStorage.removeItem(DRAFT_KEY);
+    setName('');
+    setProductCode('');
+    setSlug('');
+    setPrice('');
+    setCompareAtPrice('');
+    setDescription('');
+    setSelectedCategoryIds([]);
+    setVariants([]);
+    setImages([]);
+    setBadge('');
+    setShortDescription('');
+    setCareInstructions('');
+    setShippingInformation('');
+    setSeoTitle('');
+    setSeoDescription('');
+    setDraftRestored(false);
+  };
 
   // Auto-generate slug from name if new
   const handleNameChange = (val: string) => {
@@ -322,6 +429,10 @@ export const ProductEditorPage: React.FC = () => {
 
         if (error) throw error;
 
+        // Clear draft on successful creation
+        sessionStorage.removeItem(DRAFT_KEY);
+        setDraftRestored(false);
+
         setFeedback({
           type: 'success',
           message: 'Product created successfully.',
@@ -397,6 +508,23 @@ export const ProductEditorPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Auto-save Draft Restored Notification */}
+      {draftRestored && (
+        <div className="p-3.5 bg-[#FAF7EB] border border-[#DED6BE] rounded-xl flex items-center justify-between text-xs text-[#18281B]">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse shrink-0" />
+            <span className="font-sans">Unsaved draft was automatically restored. Your inputs are safe.</span>
+          </div>
+          <button
+            type="button"
+            onClick={clearDraft}
+            className="text-[11px] font-medium text-[#8A9288] hover:text-rose-600 underline cursor-pointer"
+          >
+            Clear Draft
+          </button>
+        </div>
+      )}
 
       {/* Feedback Banner */}
       {feedback && (

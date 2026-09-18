@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { AdminAuthProfile, AdminRole, AdminUserRecord } from '../types';
@@ -145,6 +145,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
+  const adminProfileRef = useRef<AdminAuthProfile | null>(null);
+  const initialBootRef = useRef<boolean>(true);
+
+  // Keep ref in sync
+  useEffect(() => {
+    adminProfileRef.current = adminProfile;
+  }, [adminProfile]);
+
   // Initial session hydration
   useEffect(() => {
     let isMounted = true;
@@ -152,6 +160,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     async function initSession() {
       if (!isSupabaseConfigured) {
         setLoading(false);
+        initialBootRef.current = false;
         return;
       }
 
@@ -169,12 +178,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const profile = await verifyAndLoadAdminProfile(initialSession.user);
           if (isMounted) {
             setAdminProfile(profile);
+            adminProfileRef.current = profile;
           }
         } else {
           if (isMounted) {
             setSession(null);
             setUser(null);
             setAdminProfile(null);
+            adminProfileRef.current = null;
           }
         }
       } catch (err) {
@@ -182,13 +193,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } finally {
         if (isMounted) {
           setLoading(false);
+          initialBootRef.current = false;
         }
       }
     }
 
     initSession();
 
-    // Listen to Supabase auth state changes
+    // Listen to Supabase auth state changes (e.g. token refresh on tab focus)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!isMounted) return;
 
@@ -196,16 +208,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setSession(null);
         setUser(null);
         setAdminProfile(null);
+        adminProfileRef.current = null;
         setLoading(false);
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
         setSession(newSession);
         setUser(newSession.user);
-        // If signing in, verify admin record
-        if (event === 'SIGNED_IN' && newSession.user) {
-          setLoading(true);
-          const profile = await verifyAndLoadAdminProfile(newSession.user);
-          setAdminProfile(profile);
-          setLoading(false);
+
+        // Prevent tab-switch reload loop:
+        // If the session is already active and admin profile exists, DO NOT toggle loading=true!
+        // This prevents React from unmounting the router and resetting active form states.
+        if (newSession.user) {
+          if (adminProfileRef.current && adminProfileRef.current.authUser.id === newSession.user.id) {
+            // Silent background refresh without unmounting UI
+            verifyAndLoadAdminProfile(newSession.user).then((refreshedProfile) => {
+              if (isMounted && refreshedProfile) {
+                setAdminProfile(refreshedProfile);
+                adminProfileRef.current = refreshedProfile;
+              }
+            });
+          } else if (!initialBootRef.current) {
+            // New user login after boot
+            const profile = await verifyAndLoadAdminProfile(newSession.user);
+            if (isMounted) {
+              setAdminProfile(profile);
+              adminProfileRef.current = profile;
+            }
+          }
         }
       }
     });
