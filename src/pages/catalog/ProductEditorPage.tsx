@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronUp,
   X,
+  Eye,
 } from 'lucide-react';
 import { catalogService } from '../../services/catalogService';
 import { Category, Collection, ProductMaterial, Product } from '../../types';
@@ -657,8 +658,8 @@ export const ProductEditorPage: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block font-sans text-xs font-medium text-[#18281B] mb-1.5">
-                Price (BDT / ৳) <span className="text-rose-600">*</span>
+              <label className="block font-sans text-xs font-semibold text-[#18281B] mb-1.5">
+                Current Selling Price (BDT / ৳) <span className="text-rose-600">*</span>
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-sans font-semibold text-sm text-[#6E736B]">
@@ -672,18 +673,18 @@ export const ProductEditorPage: React.FC = () => {
                   required
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
-                  placeholder="12500"
-                  className="w-full pl-8 pr-3.5 py-2.5 bg-white border border-[#DED6BE] rounded-lg text-sm font-mono text-[#18281B] font-medium placeholder-[#8A9288] focus:outline-none focus:border-[#18281B]"
+                  placeholder="1357"
+                  className="w-full pl-8 pr-3.5 py-2.5 bg-white border border-[#DED6BE] rounded-lg text-sm font-mono text-[#18281B] font-semibold placeholder-[#8A9288] focus:outline-none focus:border-[#18281B]"
                 />
               </div>
-              <p className="text-[11px] text-[#8A9288] mt-1">
-                Enter positive amount. Example: ৳ 12,500
+              <p className="text-[11px] text-[#2D6636] font-medium mt-1">
+                অফার / বিক্রয় মূল্য — কাস্টমার ওয়েবসাইটে বড় অক্ষরে দেখানো হবে।
               </p>
             </div>
 
             <div>
-              <label className="block font-sans text-xs font-medium text-[#18281B] mb-1.5">
-                Compare-at Price (Optional)
+              <label className="block font-sans text-xs font-semibold text-[#18281B] mb-1.5">
+                Compare-at Price / Original Price (Optional)
               </label>
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-sans font-semibold text-sm text-[#6E736B]">
@@ -695,12 +696,78 @@ export const ProductEditorPage: React.FC = () => {
                   step="1"
                   value={compareAtPrice}
                   onChange={(e) => setCompareAtPrice(e.target.value)}
-                  placeholder="Original price if discounted"
+                  placeholder="7864"
                   className="w-full pl-8 pr-3.5 py-2.5 bg-white border border-[#DED6BE] rounded-lg text-sm font-mono text-[#7A8278] placeholder-[#8A9288] focus:outline-none focus:border-[#18281B]"
                 />
               </div>
+              <p className="text-[11px] text-[#8A9288] mt-1">
+                আগের মূল দাম — কাস্টমার ওয়েবসাইটে উপরে ছোট করে কেটে (strikethrough) দেখানো হবে।
+              </p>
             </div>
           </div>
+
+          {/* Customer Storefront Visual Preview */}
+          {(price || compareAtPrice) && (() => {
+            const currentP = parseFloat(price) || 0;
+            const compareP = parseFloat(compareAtPrice) || 0;
+            const hasDiscount = compareP > currentP && currentP > 0;
+            const discountPct = hasDiscount ? Math.round(((compareP - currentP) / compareP) * 100) : 0;
+            const savings = hasDiscount ? compareP - currentP : 0;
+
+            return (
+              <div className="mt-4 pt-4 border-t border-[#EBE4D2] bg-[#FAF7EB]/70 p-4 rounded-xl border border-[#DED6BE]/80">
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5 text-[#2D6636]" />
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-[#4E564E]">
+                      Customer Website Live Preview (কাস্টমার যেভাবে দেখবে)
+                    </span>
+                  </div>
+                  {hasDiscount && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-700 border border-rose-200">
+                      {discountPct}% OFF
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-baseline gap-3 flex-wrap">
+                  {/* Compare-at / Original Price (Small & Slashed) */}
+                  {compareP > 0 && (
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase font-semibold text-[#8A9288] tracking-wider">
+                        Original Price
+                      </span>
+                      <span className="font-sans text-sm sm:text-base line-through text-[#8A9288] font-medium decoration-rose-500/80 decoration-2">
+                        ৳{compareP.toLocaleString('en-US')}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Selling Price (Large & Bold) */}
+                  <div className="flex flex-col">
+                    <span className="text-[10px] uppercase font-semibold text-[#2D6636] tracking-wider">
+                      Special Offer Price
+                    </span>
+                    <span className="font-sans text-2xl sm:text-3xl font-extrabold text-[#18281B] tracking-tight">
+                      ৳{currentP > 0 ? currentP.toLocaleString('en-US') : '0'}
+                    </span>
+                  </div>
+
+                  {hasDiscount && (
+                    <div className="self-end pb-1 text-xs font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      Savings: ৳{savings.toLocaleString('en-US')}
+                    </div>
+                  )}
+                </div>
+
+                <p className="text-[11px] text-[#6E756C] mt-2 font-medium">
+                  {hasDiscount
+                    ? `✓ পারফেক্ট! কাস্টমার ওয়েবসাইটে ৳${compareP.toLocaleString('en-US')} কেটে দিয়ে ৳${currentP.toLocaleString('en-US')} হাইলাইট থাকবে, ফলে ক্রেতারা ডিসকাউন্ট দেখবে।`
+                    : 'টিপস: "Compare-at Price"-এ মূল দাম (যেমন ৳৭,৮৬৪) এবং "Current Selling Price"-এ অফার দাম (যেমন ৳১,৩৫৭) দিলে ডিসকাউন্ট আকর্ষণীয়ভাবে প্রদর্শিত হবে।'}
+                </p>
+              </div>
+            );
+          })()}
         </div>
 
         {/* ================================================== */}

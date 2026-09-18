@@ -384,8 +384,17 @@ export const ProductsPage: React.FC = () => {
                       </td>
 
                       {/* Price */}
-                      <td className="py-3.5 px-4 font-medium text-[#18281B]">
-                        ৳{Number(p.price || 0).toLocaleString('en-US')}
+                      <td className="py-3.5 px-4">
+                        <div className="flex flex-col">
+                          {p.compare_at_price && Number(p.compare_at_price) > Number(p.price) && (
+                            <span className="line-through text-[10.5px] text-[#8A9288] decoration-rose-500/70 font-mono">
+                              ৳{Number(p.compare_at_price).toLocaleString('en-US')}
+                            </span>
+                          )}
+                          <span className="font-semibold text-xs sm:text-sm text-[#18281B] font-mono">
+                            ৳{Number(p.price || 0).toLocaleString('en-US')}
+                          </span>
+                        </div>
                       </td>
 
                       {/* Stock */}
