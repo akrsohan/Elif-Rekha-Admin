@@ -127,7 +127,7 @@ export const catalogService = {
         short_description: productData.short_description || null,
         price: productData.price || 0,
         compare_at_price: productData.compare_at_price || null,
-        currency: productData.currency || 'EUR',
+        currency: productData.currency || 'BDT',
         status: productData.status || 'draft',
         featured: Boolean(productData.featured),
         badge: productData.badge || null,
@@ -175,17 +175,17 @@ export const catalogService = {
 
     // 5. Insert images
     if (meta?.images && meta.images.length > 0) {
-      const rows = meta.images.map((img) => ({
+      const rows = meta.images.map((img, idx) => ({
         product_id: productId,
         image_url: img.image_url,
         alt_text: img.alt_text || null,
-        sort_order: img.sort_order || 0,
+        sort_order: img.sort_order ?? idx,
         is_primary: Boolean(img.is_primary),
       }));
       await supabase.from('product_images').insert(rows);
     }
 
-    // 6. Insert variants
+    // 6. Insert variants (sizes)
     if (meta?.variants && meta.variants.length > 0) {
       for (const v of meta.variants) {
         const { data: vRecord } = await supabase
@@ -204,11 +204,12 @@ export const catalogService = {
           .single();
 
         // Optional inventory initialization
-        if (vRecord && (v as any).quantity !== undefined) {
+        if (vRecord) {
+          const qty = (v as any).quantity !== undefined ? (v as any).quantity : 0;
           await supabase.from('inventory').insert({
             product_id: productId,
             variant_id: vRecord.id,
-            quantity: (v as any).quantity || 0,
+            quantity: qty,
             low_stock_threshold: 5,
           });
         }
@@ -225,12 +226,15 @@ export const catalogService = {
       categoryIds?: string[];
       collectionIds?: string[];
       materialIds?: string[];
+      images?: Array<{ id?: string; image_url: string; alt_text?: string; sort_order: number; is_primary: boolean }>;
+      variants?: Array<Partial<ProductVariant> & { quantity?: number }>;
     }
   ) {
     const { data: updated, error } = await supabase
       .from('products')
       .update({
         ...productData,
+        currency: productData.currency || 'BDT',
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
@@ -275,7 +279,150 @@ export const catalogService = {
       }
     }
 
+    // Update images if provided
+    if (meta?.images !== undefined) {
+      const { data: existingImages } = await supabase
+        .from('product_images')
+        .select('id')
+        .eq('product_id', id);
+
+      const existingIds = new Set((existingImages || []).map((img) => img.id));
+      const incomingIds = new Set(meta.images.filter((img) => img.id).map((img) => img.id));
+
+      // 1. Delete removed images
+      for (const existingId of existingIds) {
+        if (!incomingIds.has(existingId)) {
+          await supabase.from('product_images').delete().eq('id', existingId);
+        }
+      }
+
+      // 2. Insert new or update existing
+      for (let idx = 0; idx < meta.images.length; idx++) {
+        const img = meta.images[idx];
+        if (img.id && existingIds.has(img.id)) {
+          await supabase
+            .from('product_images')
+            .update({
+              image_url: img.image_url,
+              alt_text: img.alt_text || null,
+              sort_order: img.sort_order ?? idx,
+              is_primary: Boolean(img.is_primary),
+            })
+            .eq('id', img.id);
+        } else {
+          await supabase.from('product_images').insert({
+            product_id: id,
+            image_url: img.image_url,
+            alt_text: img.alt_text || null,
+            sort_order: img.sort_order ?? idx,
+            is_primary: Boolean(img.is_primary),
+          });
+        }
+      }
+    }
+
+    // Update variants (sizes) if provided
+    if (meta?.variants !== undefined) {
+      const { data: existingVariants } = await supabase
+        .from('product_variants')
+        .select('id')
+        .eq('product_id', id);
+
+      const existingVarIds = new Set((existingVariants || []).map((v) => v.id));
+      const incomingVarIds = new Set(meta.variants.filter((v) => v.id).map((v) => v.id));
+
+      // 1. Delete removed variants
+      for (const existingId of existingVarIds) {
+        if (!incomingVarIds.has(existingId)) {
+          await supabase.from('inventory').delete().eq('variant_id', existingId);
+          await supabase.from('product_variants').delete().eq('id', existingId);
+        }
+      }
+
+      // 2. Insert new or update existing variants
+      for (const v of meta.variants) {
+        if (v.id && existingVarIds.has(v.id)) {
+          await supabase
+            .from('product_variants')
+            .update({
+              size: v.size || null,
+              sku: v.sku || null,
+              color: v.color || null,
+              color_hex: v.color_hex || null,
+              price: v.price || null,
+              compare_at_price: v.compare_at_price || null,
+              is_active: v.is_active !== false,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', v.id);
+
+          if (v.quantity !== undefined) {
+            const { data: invRow } = await supabase
+              .from('inventory')
+              .select('id')
+              .eq('variant_id', v.id)
+              .maybeSingle();
+
+            if (invRow) {
+              await supabase
+                .from('inventory')
+                .update({ quantity: v.quantity, updated_at: new Date().toISOString() })
+                .eq('id', invRow.id);
+            } else {
+              await supabase.from('inventory').insert({
+                product_id: id,
+                variant_id: v.id,
+                quantity: v.quantity,
+                low_stock_threshold: 5,
+              });
+            }
+          }
+        } else {
+          const { data: newV } = await supabase
+            .from('product_variants')
+            .insert({
+              product_id: id,
+              sku: v.sku || null,
+              size: v.size || null,
+              color: v.color || null,
+              color_hex: v.color_hex || null,
+              price: v.price || null,
+              compare_at_price: v.compare_at_price || null,
+              is_active: v.is_active !== false,
+            })
+            .select()
+            .single();
+
+          if (newV) {
+            const qty = v.quantity !== undefined ? v.quantity : 0;
+            await supabase.from('inventory').insert({
+              product_id: id,
+              variant_id: newV.id,
+              quantity: qty,
+              low_stock_threshold: 5,
+            });
+          }
+        }
+      }
+    }
+
     return { data: updated as Product, error: null };
+  },
+
+  async isProductCodeUnique(productCode: string, excludeProductId?: string): Promise<boolean> {
+    if (!productCode || !productCode.trim()) return true;
+    let query = supabase
+      .from('products')
+      .select('id')
+      .eq('product_code', productCode.trim());
+
+    if (excludeProductId) {
+      query = query.neq('id', excludeProductId);
+    }
+
+    const { data, error } = await query.maybeSingle();
+    if (error) return true;
+    return !data;
   },
 
   async archiveOrDeleteProduct(id: string, hardDelete = false) {
@@ -458,20 +605,34 @@ export const catalogService = {
 
   async createCategory(cat: {
     name: string;
-    slug: string;
+    slug?: string;
     description?: string;
     is_active?: boolean;
     sort_order?: number;
     image_url?: string;
   }) {
-    return await supabase.from('categories').insert({
-      name: cat.name,
-      slug: cat.slug,
-      description: cat.description || null,
-      is_active: cat.is_active ?? true,
-      sort_order: cat.sort_order ?? 0,
-      image_url: cat.image_url || null,
-    }).select().single();
+    const slug =
+      cat.slug?.trim() ||
+      cat.name
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '');
+
+    return await supabase
+      .from('categories')
+      .insert({
+        name: cat.name.trim(),
+        slug,
+        description: cat.description || null,
+        is_active: cat.is_active ?? true,
+        sort_order: cat.sort_order ?? 0,
+        image_url: cat.image_url || null,
+      })
+      .select()
+      .single();
   },
 
   async updateCategory(

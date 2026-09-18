@@ -64,7 +64,7 @@ export const InventoryPage: React.FC = () => {
           color: v.color,
           sku: v.sku || prod.product_code,
           price: v.price || prod.price,
-          quantity: v.quantity ?? 10,
+          quantity: v.inventory?.[0]?.quantity ?? v.quantity ?? 0,
         });
       });
     } else {
@@ -75,7 +75,7 @@ export const InventoryPage: React.FC = () => {
         variantId: undefined,
         sku: prod.product_code,
         price: prod.price,
-        quantity: 10,
+        quantity: 0,
       });
     }
   });

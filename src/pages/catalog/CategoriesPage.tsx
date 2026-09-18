@@ -379,113 +379,45 @@ export const CategoriesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Create / Edit Modal */}
+      {/* Create / Edit Modal - Simple Category Name Form */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0A1C14]/40 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white border border-[#E5DFD5] max-w-lg w-full p-6 shadow-xl space-y-4">
-            <h3 className="font-brand text-lg text-[#0A1C14] font-medium tracking-wide pb-2 border-b border-[#F2ECE3]">
-              {editingCategory ? `Modifier Catégorie : ${editingCategory.name}` : 'Nouvelle Catégorie'}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#18281B]/40 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white border border-[#DED6BE] max-w-md w-full p-6 rounded-xl shadow-xl space-y-4">
+            <h3 className="font-sans text-base font-semibold text-[#18281B] pb-2 border-b border-[#EBE4D2]">
+              {editingCategory ? `Edit Category` : 'Add Category'}
             </h3>
 
             <form onSubmit={handleFormSubmit} className="space-y-4 text-xs font-sans">
               <div>
-                <label className="block font-fashion text-[9.5px] uppercase tracking-wider text-[#6E6657] mb-1 font-medium">
-                  Nom de la Catégorie <span className="text-red-700">*</span>
+                <label className="block font-sans text-xs font-medium text-[#18281B] mb-1.5">
+                  Category Name <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="text"
                   required
+                  autoFocus
                   value={formName}
                   onChange={(e) => handleNameChange(e.target.value)}
-                  placeholder="ex. Robes du Soir"
-                  className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#DDD5C7] text-xs text-[#0A1C14] focus:bg-white focus:outline-none focus:border-[#0A1C14]"
+                  placeholder="e.g. Women, Outerwear, Knitwear, Leather..."
+                  className="w-full px-3.5 py-2.5 bg-[#FAF7EB]/50 border border-[#DED6BE] rounded-lg text-xs text-[#18281B] focus:bg-white focus:outline-none focus:border-[#2D6636]"
                 />
               </div>
 
-              <div>
-                <label className="block font-fashion text-[9.5px] uppercase tracking-wider text-[#6E6657] mb-1 font-medium">
-                  Slug URL <span className="text-red-700">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formSlug}
-                  onChange={(e) => setFormSlug(e.target.value)}
-                  placeholder="robes-du-soir"
-                  className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-mono text-[#0A1C14] focus:bg-white focus:outline-none focus:border-[#0A1C14]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-fashion text-[9.5px] uppercase tracking-wider text-[#6E6657] mb-1 font-medium">
-                  URL de l'Image de Couverture (image_url)
-                </label>
-                <input
-                  type="url"
-                  value={formImageUrl}
-                  onChange={(e) => setFormImageUrl(e.target.value)}
-                  placeholder="https://..."
-                  className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-sans text-[#0A1C14] focus:bg-white focus:outline-none focus:border-[#0A1C14]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-fashion text-[9.5px] uppercase tracking-wider text-[#6E6657] mb-1 font-medium">
-                  Description Éditoriale
-                </label>
-                <textarea
-                  rows={3}
-                  value={formDescription}
-                  onChange={(e) => setFormDescription(e.target.value)}
-                  placeholder="Courte note de présentation pour la collection..."
-                  className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#DDD5C7] text-xs text-[#0A1C14] focus:bg-white focus:outline-none focus:border-[#0A1C14]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div>
-                  <label className="block font-fashion text-[9.5px] uppercase tracking-wider text-[#6E6657] mb-1 font-medium">
-                    Ordre d'Affichage
-                  </label>
-                  <input
-                    type="number"
-                    value={formSortOrder}
-                    onChange={(e) => setFormSortOrder(parseInt(e.target.value) || 0)}
-                    className="w-full px-3 py-2 bg-[#FAF8F5] border border-[#DDD5C7] text-xs font-mono text-[#0A1C14] focus:bg-white focus:outline-none focus:border-[#0A1C14]"
-                  />
-                </div>
-
-                <div className="flex items-center gap-2 pt-5">
-                  <input
-                    type="checkbox"
-                    id="cat_is_active"
-                    checked={formIsActive}
-                    onChange={(e) => setFormIsActive(e.target.checked)}
-                    className="w-4 h-4 accent-[#0A1C14] cursor-pointer"
-                  />
-                  <label
-                    htmlFor="cat_is_active"
-                    className="font-fashion text-[9.5px] uppercase tracking-wider text-[#0A1C14] cursor-pointer font-medium"
-                  >
-                    Catégorie Active
-                  </label>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#F2ECE3]">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#EBE4D2]">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-transparent text-[#575043] hover:text-[#0A1C14] font-fashion text-[10px] uppercase tracking-wider cursor-pointer"
+                  className="px-4 py-2 bg-transparent text-[#5A6258] hover:text-[#18281B] font-sans text-xs font-medium cursor-pointer"
                 >
-                  Annuler
+                  Cancel
                 </button>
                 <button
+                  id="btn-save-category"
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2.5 bg-[#0A1C14] hover:bg-[#143325] text-[#FAF8F5] font-fashion text-[10px] uppercase tracking-[0.2em] font-medium transition-colors cursor-pointer"
+                  className="px-5 py-2.5 bg-[#18281B] hover:bg-[#2D6636] text-white font-sans text-xs font-medium rounded-lg transition-colors cursor-pointer shadow-xs"
                 >
-                  {submitting ? 'Enregistrement...' : 'Enregistrer'}
+                  {submitting ? 'Saving Category...' : 'Save Category'}
                 </button>
               </div>
             </form>
