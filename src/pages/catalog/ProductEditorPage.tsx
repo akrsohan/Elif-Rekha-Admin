@@ -701,7 +701,7 @@ export const ProductEditorPage: React.FC = () => {
             onClick={() => setShowAdvanced(!showAdvanced)}
             className="w-full flex items-center justify-between font-sans text-xs font-medium text-[#18281B] hover:text-[#2D6636] transition-colors cursor-pointer"
           >
-            <span>Additional Details (Collections, Materials, SEO, Care)</span>
+            <span>Additional Details (Collections, SEO, Care)</span>
             {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
 

@@ -26,7 +26,6 @@ export const MAIN_NAVIGATION: NavItem[] = [
       { title: 'Inventory', path: '/admin/catalog/inventory', isAvailable: true },
       { title: 'Categories', path: '/admin/catalog/categories', isAvailable: true },
       { title: 'Collections', path: '/admin/catalog/collections', isAvailable: true },
-      { title: 'Materials', path: '/admin/catalog/materials', isAvailable: true },
     ],
   },
   {

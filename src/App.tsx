@@ -10,7 +10,6 @@ import { ProductsPage } from './pages/catalog/ProductsPage';
 import { ProductEditorPage } from './pages/catalog/ProductEditorPage';
 import { CategoriesPage } from './pages/catalog/CategoriesPage';
 import { CollectionsPage } from './pages/catalog/CollectionsPage';
-import { MaterialsPage } from './pages/catalog/MaterialsPage';
 import { InventoryPage } from './pages/catalog/InventoryPage';
 import { OrdersPage } from './pages/orders/OrdersPage';
 import { OrderDetailPage } from './pages/orders/OrderDetailPage';
@@ -44,7 +43,7 @@ export default function App() {
             <Route path="catalog/products/edit/:id" element={<ProductEditorPage />} />
             <Route path="catalog/categories" element={<CategoriesPage />} />
             <Route path="catalog/collections" element={<CollectionsPage />} />
-            <Route path="catalog/materials" element={<MaterialsPage />} />
+            <Route path="catalog/materials" element={<Navigate to="/admin/catalog/products" replace />} />
             <Route path="catalog/inventory" element={<InventoryPage />} />
 
             {/* Orders & Customers sub-modules */}
