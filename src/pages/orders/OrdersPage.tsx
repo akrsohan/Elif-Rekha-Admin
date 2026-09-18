@@ -28,6 +28,7 @@ import {
 import { Order, OrderStatus } from '../../types';
 import { usePermission } from '../../hooks/usePermission';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 
 export const OrdersPage: React.FC = () => {
   const navigate = useNavigate();
@@ -98,6 +99,22 @@ export const OrdersPage: React.FC = () => {
 
   useEffect(() => {
     fetchOrders();
+
+    // Realtime channel for order updates
+    const channel = supabase
+      .channel('orders-live-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders' },
+        () => {
+          fetchOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [fetchOrders]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {

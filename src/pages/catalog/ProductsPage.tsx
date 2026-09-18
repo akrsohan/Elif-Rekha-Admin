@@ -24,6 +24,7 @@ import { catalogService, ProductFilters } from '../../services/catalogService';
 import { Product, Category } from '../../types';
 import { usePermission } from '../../hooks/usePermission';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
+import { supabase } from '../../lib/supabase';
 
 export const ProductsPage: React.FC = () => {
   const {
@@ -107,6 +108,22 @@ export const ProductsPage: React.FC = () => {
 
   useEffect(() => {
     fetchProducts();
+
+    // Listen for realtime product updates (insert, update, delete)
+    const channel = supabase
+      .channel('products-live-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'products' },
+        () => {
+          fetchProducts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [fetchProducts]);
 
   const handleActionConfirm = async () => {
